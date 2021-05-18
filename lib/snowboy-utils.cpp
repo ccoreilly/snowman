@@ -22,6 +22,7 @@ namespace snowboy {
 		return res;
 	}
 
+	#ifdef __GLIBC__
 	bool CheckStdinNonBlocking() {
 		fd_set set{};
 		struct timeval timeout {};
@@ -32,6 +33,7 @@ namespace snowboy {
 		select(1, &set, nullptr, nullptr, &timeout);
 		return FD_ISSET(0, &set);
 	}
+	#endif
 
 	bool ConvertStringToBoolean(const std::string& val) {
 		return ConvertStringTo<bool>(val);
@@ -98,7 +100,7 @@ namespace snowboy {
 		}
 	}
 
-	void* SnowboyMemalign(ulong align, ulong size) {
+	void* SnowboyMemalign(uint64_t align, uint64_t size) {
 		void* ptr = nullptr;
 		if (posix_memalign(&ptr, align, size) == 0)
 			return ptr;

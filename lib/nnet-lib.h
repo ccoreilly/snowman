@@ -52,5 +52,5 @@ namespace snowboy {
 		void Read(bool binary, std::istream* is);
 		void Write(bool binary, std::ostream* is) const;
 	};
-	static_assert(sizeof(Nnet) == 0x110);
+	//static_assert(sizeof(Nnet) == 0x110);
 } // namespace snowboy

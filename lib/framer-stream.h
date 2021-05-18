@@ -16,7 +16,7 @@ namespace snowboy {
 		std::string window_type;
 		void Register(const std::string&, OptionsItf*);
 	};
-	static_assert(sizeof(FramerStreamOptions) == 0x20);
+	//static_assert(sizeof(FramerStreamOptions) == 0x20);
 	struct FramerStream : StreamItf {
 		int m_sample_rate;
 		int m_frame_length_ms;
@@ -42,5 +42,5 @@ namespace snowboy {
 		virtual std::string Name() const override;
 		virtual ~FramerStream();
 	};
-	static_assert(sizeof(FramerStream) == 0x68);
+	//static_assert(sizeof(FramerStream) == 0x68);
 } // namespace snowboy

@@ -81,7 +81,7 @@ namespace snowboy {
 		SubVector(const MatrixBase& parent, int);
 		SubVector(const SubVector& other);
 	};
-	static_assert(sizeof(VectorBase) == 0x10);
-	static_assert(sizeof(Vector) == 0x10);
-	static_assert(sizeof(SubVector) == 0x10);
+	//static_assert(sizeof(VectorBase) == 0x10);
+	//static_assert(sizeof(Vector) == 0x10);
+	//static_assert(sizeof(SubVector) == 0x10);
 } // namespace snowboy

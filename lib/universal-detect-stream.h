@@ -22,13 +22,13 @@ namespace snowboy {
 		bool debug_mode;
 		void Register(const std::string&, OptionsItf*);
 	};
-	static_assert(sizeof(UniversalDetectStreamOptions) == 0x40);
+	//static_assert(sizeof(UniversalDetectStreamOptions) == 0x40);
 
 	struct UniversalDetectStream : StreamItf {
 		struct PieceInfo {
 			char unknown[12];
 		};
-		static_assert(sizeof(PieceInfo) == 0xc);
+		//static_assert(sizeof(PieceInfo) == 0xc);
 
 		UniversalDetectStreamOptions m_options;
 		int field_x58;
@@ -116,5 +116,5 @@ namespace snowboy {
 		void UpdateModel() const;
 		void WriteHotwordModel(bool binary, const std::string& filename) const;
 	};
-	static_assert(sizeof(UniversalDetectStream) == 0x2c8);
+	//static_assert(sizeof(UniversalDetectStream) == 0x2c8);
 } // namespace snowboy

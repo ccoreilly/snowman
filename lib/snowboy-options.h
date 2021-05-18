@@ -39,7 +39,7 @@ namespace snowboy {
 
 		void SetValue(const std::string& v);
 	};
-	static_assert(sizeof(OptionInfo) == 0x38);
+	//static_assert(sizeof(OptionInfo) == 0x38);
 	struct OptionsItf {
 		virtual void Register(const std::string& prefix, const std::string& name, const std::string& usage_info, bool* ptr) = 0;
 		virtual void Register(const std::string& prefix, const std::string& name, const std::string& usage_info, int32_t* ptr) = 0;
@@ -80,13 +80,13 @@ namespace snowboy {
 	};
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Winvalid-offsetof"
-	static_assert(offsetof(ParseOptions, m_opt_print_usage) == 0x8);
-	static_assert(offsetof(ParseOptions, m_opt_config_file) == 0x10);
-	static_assert(offsetof(ParseOptions, m_usage) == 0x18);
-	static_assert(offsetof(ParseOptions, m_arguments) == 0x20);
-	static_assert(offsetof(ParseOptions, m_options) == 0x38);
-	static_assert(offsetof(ParseOptions, field_0x70) == 0x70);
+	//static_assert(offsetof(ParseOptions, m_opt_print_usage) == 0x8);
+	//static_assert(offsetof(ParseOptions, m_opt_config_file) == 0x10);
+	//static_assert(offsetof(ParseOptions, m_usage) == 0x18);
+	//static_assert(offsetof(ParseOptions, m_arguments) == 0x20);
+	//static_assert(offsetof(ParseOptions, m_options) == 0x38);
+	//static_assert(offsetof(ParseOptions, field_0x70) == 0x70);
 #pragma GCC diagnostic pop
 	// TODO: This might be wrong, since we dont have a new/malloc call for it.
-	static_assert(sizeof(ParseOptions) == 0xa8);
+	//static_assert(sizeof(ParseOptions) == 0xa8);
 } // namespace snowboy

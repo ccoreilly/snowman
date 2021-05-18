@@ -16,7 +16,7 @@ namespace snowboy {
 	template <typename T>
 	inline T ConvertStringToIntegerOrFloat(const std::string& s) { return ConvertStringTo<T>(s); }
 	void FilterConfigString(bool, const std::string& prefix, std::string* config_str);
-	void* SnowboyMemalign(ulong align, ulong size);
+	void* SnowboyMemalign(uint64_t align, uint64_t size);
 	void SnowboyMemalignFree(void* ptr);
 	template <typename T>
 	void SplitStringToIntegers(const std::string& s1, const std::string& s2, std::vector<T>* out);

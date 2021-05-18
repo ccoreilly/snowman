@@ -15,7 +15,7 @@ namespace snowboy {
 		int raw_buffer_extra;
 		void Register(const std::string&, OptionsItf*);
 	};
-	static_assert(sizeof(RawEnergyVadStreamOptions) == 20);
+	//static_assert(sizeof(RawEnergyVadStreamOptions) == 20);
 	struct RawEnergyVadStream : StreamItf {
 		RawEnergyVadStreamOptions m_options;
 		bool field_x2c;
@@ -35,5 +35,5 @@ namespace snowboy {
 		void InitRawEnergyVad(Matrix*, std::vector<FrameInfo>*);
 		void UpdateBackgroundEnergy(const std::vector<FrameInfo>&);
 	};
-	static_assert(sizeof(RawEnergyVadStream) == 0x108);
+	//static_assert(sizeof(RawEnergyVadStream) == 0x108);
 } // namespace snowboy

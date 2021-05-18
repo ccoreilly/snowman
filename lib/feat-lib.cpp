@@ -212,8 +212,8 @@ namespace snowboy {
 		ptr[0] = 1.0;
 		ptr[1] = 0;
 
-		float _sin, _cos;
-		sincosf((-M_PI * 2) / len, &_sin, &_cos);
+		float _sin = sinf((-M_PI * 2) / len);
+		float _cos = cosf((-M_PI * 2) / len);
 		float tempa = 0;
 		float tempb = 1;
 		for (int i = 2; i < len - 4; i += 4) {

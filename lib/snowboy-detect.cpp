@@ -82,6 +82,7 @@ namespace snowboy {
 			SNOWBOY_ERROR() << "SnowboyDetect: data is NULL";
 			return -1;
 		}
+		std::printf("Snowboy here! len=%d 0=%d %d=%d\n", array_length, data[0], array_length-1, data[array_length-1]);
 		Matrix mat;
 		mat.Resize(wave_header_->wChannels, array_length / wave_header_->wChannels, MatrixResizeType::kSetZero);
 		// No idea if this is correct, but it looks right...

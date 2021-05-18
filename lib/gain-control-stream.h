@@ -7,7 +7,7 @@ namespace snowboy {
 		float m_audioGain;
 		void Register(const std::string&, OptionsItf*);
 	};
-	static_assert(sizeof(GainControlStreamOptions) == 4);
+	//static_assert(sizeof(GainControlStreamOptions) == 4);
 	struct GainControlStream : StreamItf {
 		float m_audioGain;
 		float m_maxAudioAmplitude;
@@ -21,5 +21,5 @@ namespace snowboy {
 		void SetAudioGain(float gain);
 		void SetMaxAudioAmplitude(float amp);
 	};
-	static_assert(sizeof(GainControlStream) == 0x20);
+	//static_assert(sizeof(GainControlStream) == 0x20);
 } // namespace snowboy

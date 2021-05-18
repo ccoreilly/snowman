@@ -26,7 +26,7 @@ namespace snowboy {
 			std::deque<float> local_88;
 			local_88.resize(local_ac - local_b0 + 1);
 			for (auto iVar13 = local_b0; iVar13 <= local_ac; iVar13++) {
-				auto fVar27 = ComputeVectorDistance(SubVector{*m_reference, iVar13}, SubVector{param_2, iVar25});
+				auto fVar27 = ComputeVectorDistance(SubVector{*m_reference, iVar13}, SubVector{param_2, (int) iVar25});
 				local_88[iVar13 - local_b0] = fVar27;
 			}
 			field_x18.push_back(local_88);
@@ -258,9 +258,9 @@ namespace snowboy {
 						auto iVar15 = iVar11 * local_1d8.m_stride;
 						auto iVar12 = local_21c + -1;
 						pfVar8[2] = fVar18;
-						*pfVar8 = (float)((uint)(fVar18 - local_1d8.m_data[(long)iVar15 + (long)iVar12]) & 0x7fffffff);
-						pfVar8[1] = (float)((uint)(fVar18 - local_1d8.m_data[(long)(int)(iVar15 + local_1d8.m_stride) + (long)iVar12]) & 0x7fffffff);
-						pfVar8[2] = (float)((uint)(fVar18 - local_1d8.m_data[(long)iVar15 + (long)local_21c]) & 0x7fffffff);
+						*pfVar8 = (float)((uint64_t)(fVar18 - local_1d8.m_data[(long)iVar15 + (long)iVar12]) & 0x7fffffff);
+						pfVar8[1] = (float)((uint64_t)(fVar18 - local_1d8.m_data[(long)(int)(iVar15 + local_1d8.m_stride) + (long)iVar12]) & 0x7fffffff);
+						pfVar8[2] = (float)((uint64_t)(fVar18 - local_1d8.m_data[(long)iVar15 + (long)local_21c]) & 0x7fffffff);
 						auto pfVar9 = pfVar8;
 						auto pfVar13 = pfVar8;
 						while (pfVar9 = pfVar9 + 1, pfVar9 != pfVar8 + 3) {

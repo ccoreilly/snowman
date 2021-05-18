@@ -56,7 +56,7 @@ TEST(ClassifyTest, ClassifySamples) {
 	bool skipped_all = true;
 	for (auto& e : sample_map) {
 		if (!file_exists(root + "audio_samples/" + e.first)) {
-			GTEST_WARN("Skiping %s because audio file is missing!", e.first.c_str());
+			std::printf("Skiping %s because audio file is missing!", e.first.c_str());
 			continue;
 		}
 		skipped_all = false;
@@ -80,7 +80,7 @@ TEST(ClassifyTest, ClassifySamples) {
 TEST(ClassifyTest, ClassifySamplesAlma) {
 	auto model_exists = file_exists(root + "resources/models/Alma.pmdl");
 	if (!model_exists) {
-		GTEST_WARN("Missing private model, this does not mean, that private models dont work, just that my model is not present!");
+		std::printf("Missing private model, this does not mean, that private models dont work, just that my model is not present!");
 		return;
 	}
 
@@ -89,7 +89,7 @@ TEST(ClassifyTest, ClassifySamplesAlma) {
 	bool skipped_all = true;
 	for (auto& e : sample_map_pmdl) {
 		if (!file_exists(root + "audio_samples/" + e.first)) {
-			GTEST_WARN("Skiping %s because audio file is missing!", e.first.c_str());
+			std::printf("Skiping %s because audio file is missing!", e.first.c_str());
 			continue;
 		}
 		skipped_all = false;
@@ -119,7 +119,7 @@ TEST(ClassifyTest, ClassifySamplesReset) {
 	bool skipped_all = true;
 	for (auto& e : sample_map) {
 		if (!file_exists(root + "audio_samples/" + e.first)) {
-			GTEST_WARN("Skiping %s because audio file is missing!", e.first.c_str());
+			std::printf("Skiping %s because audio file is missing!", e.first.c_str());
 			continue;
 		}
 		skipped_all = false;
@@ -135,7 +135,7 @@ TEST(ClassifyTest, LoadModels) {
 	bool skipped_all = true;
 	for (auto& e : model_map) {
 		if (!file_exists(root + "resources/models/" + e)) {
-			GTEST_WARN("Skiping %s because model is missing!", e.c_str());
+			std::printf("Skiping %s because model is missing!", e.c_str());
 			continue;
 		}
 		skipped_all = false;
@@ -145,7 +145,7 @@ TEST(ClassifyTest, LoadModels) {
 
 		for (auto& e : sample_map) {
 			if (!file_exists(root + "audio_samples/" + e.first)) {
-				GTEST_WARN("Skiping %s because audio file is missing!", e.first.c_str());
+				std::printf("Skiping %s because audio file is missing!", e.first.c_str());
 				continue;
 			}
 			auto data = read_sample_file(root + "audio_samples/" + e.first);

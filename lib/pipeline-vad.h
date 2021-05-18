@@ -75,5 +75,5 @@ namespace snowboy {
 		void SetAudioGain(float gain);
 		void SetMaxAudioAmplitude(float maxAmplitude);
 	};
-	static_assert(sizeof(PipelineVad) == 0xd8);
+	//static_assert(sizeof(PipelineVad) == 0xd8);
 } // namespace snowboy

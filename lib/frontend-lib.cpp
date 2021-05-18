@@ -1,6 +1,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <frontend-lib.h>
 
 #define SHR(a, shift) ((a) >> (shift))

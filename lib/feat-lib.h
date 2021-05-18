@@ -18,7 +18,7 @@ namespace snowboy {
 
 		void Register(const std::string& prefix, OptionsItf* opts);
 	};
-	static_assert(sizeof(MelFilterBankOptions) == 0x20);
+	//static_assert(sizeof(MelFilterBankOptions) == 0x20);
 
 	struct MelFilterBank {
 		MelFilterBankOptions m_options;
@@ -33,7 +33,7 @@ namespace snowboy {
 		void ComputeMelFilterBankEnergy(const VectorBase&, Vector*) const;
 		void ValidateOptions() const;
 	};
-	static_assert(sizeof(MelFilterBank) == 0x58);
+	//static_assert(sizeof(MelFilterBank) == 0x58);
 
 	void ComputeDctMatrixTypeIII(Matrix* mat);
 	void ComputeCepstralLifterCoeffs(float, Vector*);
@@ -73,7 +73,7 @@ namespace snowboy {
 		virtual void DoIfft(Vector*) const override;
 		virtual ~Fft();
 	};
-	static_assert(sizeof(Fft) == 0x48);
+	//static_assert(sizeof(Fft) == 0x48);
 
 	struct SplitRadixFft : FftItf {
 		FftOptions m_options;
@@ -96,5 +96,5 @@ namespace snowboy {
 		virtual void DoIfft(Vector*) const override;
 		virtual ~SplitRadixFft();
 	};
-	static_assert(sizeof(SplitRadixFft) == 0x48);
+	//static_assert(sizeof(SplitRadixFft) == 0x48);
 } // namespace snowboy

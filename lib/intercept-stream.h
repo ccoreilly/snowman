@@ -19,5 +19,5 @@ namespace snowboy {
 		void ReadData(Matrix* mat, std::vector<FrameInfo>* info, SnowboySignal* signal);
 		void SetData(const MatrixBase& mat, const std::vector<FrameInfo>& info, const SnowboySignal& signal);
 	};
-	static_assert(sizeof(InterceptStream) == 0x108);
+	//static_assert(sizeof(InterceptStream) == 0x108);
 } // namespace snowboy

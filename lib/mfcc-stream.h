@@ -13,7 +13,7 @@ namespace snowboy {
 
 		void Register(const std::string& prefix, OptionsItf* opts);
 	};
-	static_assert(sizeof(MfccStreamOptions) == 0x2c);
+	//static_assert(sizeof(MfccStreamOptions) == 0x2c);
 	struct MfccStream : StreamItf {
 		MfccStreamOptions m_options;
 		int field_x44;
@@ -31,5 +31,5 @@ namespace snowboy {
 		void InitMelFilterBank(int);
 		void ComputeMfcc(const VectorBase&, SubVector*) const;
 	};
-	static_assert(sizeof(MfccStream) == 0x80);
+	//static_assert(sizeof(MfccStream) == 0x80);
 } // namespace snowboy
