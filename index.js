@@ -26,7 +26,7 @@ async function init() {
     numberOfOutputs: 1,
   });
 
-  const worker = new Worker("http://localhost:5000/worker.js");
+  const worker = new Worker("https://ccoreilly.github.io/snowman/worker.js");
   worker.onmessage = (ev) => {
     const message = ev.data;
     switch (message.action) {

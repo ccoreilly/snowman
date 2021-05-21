@@ -8,7 +8,7 @@ class Snowplough {
   stateSharedArray = new Int32Array(this.sharedBuffers.state);
 
   constructor() {
-    importScripts("http://localhost:5000/snowboy_wasm.js");
+    importScripts("https://ccoreilly.github.io/snowman/snowboy_wasm.js");
     self.addEventListener("message", (event) => this.handleMessage(event));
     this.load("common.resources", "snowboy.umdl");
   }
