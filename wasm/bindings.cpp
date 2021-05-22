@@ -15,8 +15,8 @@ static snowboy::SnowboyDetect* makeDetector(const std::string& resource_filename
 }
 
 static int SnowboyDetect_RunDetection(snowboy::SnowboyDetect& self, long jsHeapAddr, int len, bool is_end = false) {
-	const float* fdata = (const float*)jsHeapAddr;
-	std::printf("RunDetection received len=%d 0=%f %d=%f\n", len, fdata[0], len - 1, fdata[len - 1]);
+	const int16_t* fdata = (const int16_t*)jsHeapAddr;
+	std::printf("RunDetection received len=%d 0=%d %d=%d\n", len, fdata[0], len - 1, fdata[len - 1]);
 
 	return self.SnowboyDetect::RunDetection(fdata, len, false);
 }
