@@ -5,6 +5,7 @@
 #include <snowboy-debug.h>
 #include <snowboy-math.h>
 #include <snowboy-options.h>
+#include <srfft.h>
 #include <vector-wrapper.h>
 
 namespace snowboy {
@@ -23,7 +24,7 @@ namespace snowboy {
 			// Never used in any of my models
 			m_fft.reset(new Fft(options));
 		} else if (m_options.method == "srfft") {
-			// TODO: m_fft.reset(new SplitRadixFft(options));
+			m_fft.reset(new SplitRadixFft(options));
 		} else {
 			SNOWBOY_ERROR() << "FFT method has not been implemented: " << m_options.method;
 			return;
@@ -56,15 +57,10 @@ namespace snowboy {
 			InitFft(num_fft_points);
 		}
 		mat->Resize(m.m_rows, num_fft_points);
+		Vector v;
 		for (int r = 0; r < m.m_rows; r++) {
-			SubVector svec{m, r};
-			Vector v;
-			v.Resize(svec.m_size, MatrixResizeType::kUndefined);
-			v.CopyFromVec(svec);
-			if (v.m_size < num_fft_points) {
-				// TODO: Cant we correctly size the matrix in the first place ?
-				v.Resize(num_fft_points, MatrixResizeType::kCopyData);
-			}
+			v.Resize(std::max<int>(m.cols(), num_fft_points));
+			v.CopyFromVec(SubVector{m, r});
 			m_fft->DoFft(&v);
 			// TODO: Cant we work directly on mat ?
 			SubVector{*mat, r}.CopyFromVec(v);

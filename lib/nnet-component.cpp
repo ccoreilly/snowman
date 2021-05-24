@@ -134,9 +134,10 @@ namespace snowboy {
 
 	void AffineComponent::Propagate(const ChunkInfo& in_info,
 									const ChunkInfo& out_info,
-									const MatrixBase& in,
-									MatrixBase* out) const {
+									Matrix&& in,
+									Matrix* out) const {
 		in_info.CheckSize(in);
+		out->Resize(out_info.NumChunks() * out_info.ChunkSize(), out_info.NumCols());
 		out_info.CheckSize(*out);
 		out->CopyRowsFromVec(m_bias_params);
 		out->AddMatMat(1.0, in, MatrixTransposeType::kNoTrans, m_linear_params, MatrixTransposeType::kTrans, 1.0);
@@ -186,11 +187,11 @@ namespace snowboy {
 
 	void CmvnComponent::Propagate(const ChunkInfo& in_info,
 								  const ChunkInfo& out_info,
-								  const MatrixBase& in,
-								  MatrixBase* out) const {
+								  Matrix&& in,
+								  Matrix* out) const {
 		in_info.CheckSize(in);
+		*out = std::move(in);
 		out_info.CheckSize(*out);
-		out->CopyFromMat(in, MatrixTransposeType::kNoTrans);
 		out->MulColsVec(m_scales);
 		out->AddVecToRows(1.0, m_offsets);
 	}
@@ -239,18 +240,18 @@ namespace snowboy {
 
 	void NormalizeComponent::Propagate(const ChunkInfo& in_info,
 									   const ChunkInfo& out_info,
-									   const MatrixBase& in,
-									   MatrixBase* out) const {
+									   Matrix&& in,
+									   Matrix* out) const {
 		in_info.CheckSize(in);
-		out_info.CheckSize(*out);
-
-		out->CopyFromMat(in, MatrixTransposeType::kNoTrans);
 
 		Vector vec;
 		vec.Resize(in.m_rows);
 		vec.AddDiagMat2(1.0 / in.m_cols, in, MatrixTransposeType::kNoTrans, 0.0);
 		vec.ApplyFloor(field_x14);
 		vec.ApplyPow(-0.5);
+
+		*out = std::move(in);
+		out_info.CheckSize(*out);
 		out->MulRowsVec(vec);
 	}
 
@@ -258,7 +259,7 @@ namespace snowboy {
 		auto beg_token = "<" + Type() + ">";
 		auto end_token = "</" + Type() + ">";
 		ExpectOneOrTwoTokens(binary, beg_token, "<Dim>", is);
-		ReadBasicType<int>(binary, &m_dim, is);
+		ReadBasicType<int32_t>(binary, &m_dim, is);
 		ExpectToken(binary, end_token, is);
 		field_x10 = 1;
 	}
@@ -268,7 +269,7 @@ namespace snowboy {
 		auto end_token = "</" + Type() + ">";
 		WriteToken(binary, beg_token, os);
 		WriteToken(binary, "<Dim>", os);
-		WriteBasicType<int>(binary, m_dim, os);
+		WriteBasicType<int32_t>(binary, m_dim, os);
 		WriteToken(binary, end_token, os);
 	}
 
@@ -294,12 +295,12 @@ namespace snowboy {
 
 	void PosteriorMapComponent::Propagate(const ChunkInfo& in_info,
 										  const ChunkInfo& out_info,
-										  const MatrixBase& in,
-										  MatrixBase* out) const {
+										  Matrix&& in,
+										  Matrix* out) const {
 		in_info.CheckSize(in);
+		out->Resize(out_info.NumChunks() * out_info.ChunkSize(), out_info.NumCols());
 		out_info.CheckSize(*out);
 
-		//SNOWBOY_ERROR() << "Unimplemented";
 		for (size_t r = 0; r < in.m_rows; r++)
 		{
 			if (out->m_cols < 2)
@@ -308,19 +309,16 @@ namespace snowboy {
 			} else {
 				// TODO: I did my best but between here
 				auto ptr = out->m_data + (out->m_stride * r);
-				float x = 0.0;
-				auto ptr2 = ptr;
+				float sum = 0.0f;
 				for (auto& idx_vec : m_indices) {
-					ptr2++;
-					auto f = *ptr2;
+					ptr++;
 					for (auto idx : idx_vec) {
 						auto v = in.m_data[in.m_stride * r + idx];
-						f += v;
-						x += v;
+						*ptr += v;
+						sum += v;
 					}
-					*ptr2 = f;
 				}
-				out->m_data[out->m_stride * r] = 1.0 - x;
+				out->m_data[out->m_stride * r] = 1.0 - sum;
 				// TODO: and here are probably a number of bugs
 			}
 		}
@@ -330,13 +328,13 @@ namespace snowboy {
 		auto beg_token = "<" + Type() + ">";
 		auto end_token = "</" + Type() + ">";
 		ExpectOneOrTwoTokens(binary, beg_token, "<InputDim>", is);
-		ReadBasicType<int>(binary, &m_inputDim, is);
+		ReadBasicType<int32_t>(binary, &m_inputDim, is);
 		ExpectToken(binary, "<OutputDim>", is);
-		ReadBasicType<int>(binary, &m_outputDim, is);
+		ReadBasicType<int32_t>(binary, &m_outputDim, is);
 		ExpectToken(binary, "<Indices>", is);
 		m_indices.resize(m_outputDim - 1);
 		for (auto& e : m_indices)
-			ReadIntegerVector<int>(binary, &e, is);
+			ReadIntegerVector<int32_t>(binary, &e, is);
 		ExpectToken(binary, end_token, is);
 		field_xc = 1;
 	}
@@ -346,9 +344,9 @@ namespace snowboy {
 		auto end_token = "</" + Type() + ">";
 		WriteToken(binary, beg_token, os);
 		WriteToken(binary, "<InputDim>", os);
-		WriteBasicType<int>(binary, m_inputDim, os);
+		WriteBasicType<int32_t>(binary, m_inputDim, os);
 		WriteToken(binary, "<OutputDim>", os);
-		WriteBasicType<int>(binary, m_outputDim, os);
+		WriteBasicType<int32_t>(binary, m_outputDim, os);
 		WriteToken(binary, "<Indices>", os);
 		for (auto& e : m_indices)
 			WriteIntegerVector(binary, e, os);
@@ -378,12 +376,11 @@ namespace snowboy {
 
 	void RectifiedLinearComponent::Propagate(const ChunkInfo& in_info,
 											 const ChunkInfo& out_info,
-											 const MatrixBase& in,
-											 MatrixBase* out) const {
+											 Matrix&& in,
+											 Matrix* out) const {
 		in_info.CheckSize(in);
+		*out = std::move(in);
 		out_info.CheckSize(*out);
-
-		out->CopyFromMat(in, MatrixTransposeType::kNoTrans);
 		out->ApplyFloor(0.0);
 	}
 
@@ -391,7 +388,7 @@ namespace snowboy {
 		auto beg_token = "<" + Type() + ">";
 		auto end_token = "</" + Type() + ">";
 		ExpectOneOrTwoTokens(binary, beg_token, "<Dim>", is);
-		ReadBasicType<int>(binary, &m_dim, is);
+		ReadBasicType<int32_t>(binary, &m_dim, is);
 		ExpectToken(binary, end_token, is);
 		field_x10 = 1;
 	}
@@ -401,7 +398,7 @@ namespace snowboy {
 		auto end_token = "</" + Type() + ">";
 		WriteToken(binary, beg_token, os);
 		WriteToken(binary, "<Dim>", os);
-		WriteBasicType<int>(binary, m_dim, os);
+		WriteBasicType<int32_t>(binary, m_dim, os);
 		WriteToken(binary, end_token, os);
 	}
 
@@ -426,12 +423,12 @@ namespace snowboy {
 
 	void SoftmaxComponent::Propagate(const ChunkInfo& in_info,
 									 const ChunkInfo& out_info,
-									 const MatrixBase& in,
-									 MatrixBase* out) const {
+									 Matrix&& in,
+									 Matrix* out) const {
 		in_info.CheckSize(in);
-		out_info.CheckSize(*out);
 
-		out->CopyFromMat(in, MatrixTransposeType::kNoTrans);
+		*out = std::move(in);
+		out_info.CheckSize(*out);
 		for (int i = 0; i < out->m_rows; i++)
 		{
 			SubVector vec{*out, i};
@@ -446,7 +443,7 @@ namespace snowboy {
 		auto beg_token = "<" + Type() + ">";
 		auto end_token = "</" + Type() + ">";
 		ExpectOneOrTwoTokens(binary, beg_token, "<Dim>", is);
-		ReadBasicType<int>(binary, &m_dim, is);
+		ReadBasicType<int32_t>(binary, &m_dim, is);
 		ExpectToken(binary, end_token, is);
 		field_x10 = 1;
 	}
@@ -456,7 +453,7 @@ namespace snowboy {
 		auto end_token = "</" + Type() + ">";
 		WriteToken(binary, beg_token, os);
 		WriteToken(binary, "<Dim>", os);
-		WriteBasicType<int>(binary, m_dim, os);
+		WriteBasicType<int32_t>(binary, m_dim, os);
 		WriteToken(binary, end_token, os);
 	}
 
@@ -489,9 +486,10 @@ namespace snowboy {
 
 	void SpliceComponent::Propagate(const ChunkInfo& in_info,
 									const ChunkInfo& out_info,
-									const MatrixBase& in,
-									MatrixBase* out) const {
+									Matrix&& in,
+									Matrix* out) const {
 		in_info.CheckSize(in);
+		out->Resize(out_info.NumChunks() * out_info.ChunkSize(), out_info.NumCols());
 		out_info.CheckSize(*out);
 		SNOWBOY_ASSERT(in_info.NumChunks() == out_info.NumChunks());
 
@@ -570,11 +568,11 @@ namespace snowboy {
 		auto beg_token = "<" + Type() + ">";
 		auto end_token = "</" + Type() + ">";
 		ExpectOneOrTwoTokens(binary, beg_token, "<InputDim>", is);
-		ReadBasicType<int>(binary, &m_inputDim, is);
+		ReadBasicType<int32_t>(binary, &m_inputDim, is);
 		ExpectToken(binary, "<Context>", is);
 		ReadIntegerVector<int>(binary, &m_context, is);
 		ExpectToken(binary, "<ConstComponentDim>", is);
-		ReadBasicType<int>(binary, &m_constComponentDim, is);
+		ReadBasicType<int32_t>(binary, &m_constComponentDim, is);
 		ExpectToken(binary, end_token, is);
 		field_xc = 1;
 	}
@@ -584,11 +582,11 @@ namespace snowboy {
 		auto end_token = "</" + Type() + ">";
 		WriteToken(binary, beg_token, os);
 		WriteToken(binary, "<InputDim>", os);
-		WriteBasicType<int>(binary, m_inputDim, os);
+		WriteBasicType<int32_t>(binary, m_inputDim, os);
 		WriteToken(binary, "<Context>", os);
-		WriteIntegerVector<int>(binary, m_context, os);
+		WriteIntegerVector<int32_t>(binary, m_context, os);
 		WriteToken(binary, "<ConstComponentDim>", os);
-		WriteBasicType<int>(binary, m_constComponentDim, os);
+		WriteBasicType<int32_t>(binary, m_constComponentDim, os);
 		WriteToken(binary, end_token, os);
 	}
 

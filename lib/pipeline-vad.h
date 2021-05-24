@@ -34,7 +34,6 @@ namespace snowboy {
 		void Register(const std::string& prefix, OptionsItf* opts);
 	};
 	struct PipelineVad : PipelineItf {
-		bool m_isInitialized;
 		std::unique_ptr<InterceptStream> m_interceptStream;
 		std::unique_ptr<GainControlStream> m_gainControlStream;
 		std::unique_ptr<FrontendStream> m_frontendStream;
@@ -75,5 +74,4 @@ namespace snowboy {
 		void SetAudioGain(float gain);
 		void SetMaxAudioAmplitude(float maxAmplitude);
 	};
-	//static_assert(sizeof(PipelineVad) == 0xd8);
 } // namespace snowboy

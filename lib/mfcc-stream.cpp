@@ -2,6 +2,7 @@
 #include <frame-info.h>
 #include <limits>
 #include <mfcc-stream.h>
+#include <snowboy-debug.h>
 #include <snowboy-options.h>
 #include <vector-wrapper.h>
 
@@ -17,17 +18,14 @@ namespace snowboy {
 		m_options = options;
 		field_x44 = -1;
 		field_x48 = 0.0f;
+		// TODO: Can we optimize this matrix ?
 		Matrix m;
 		m.Resize(m_options.mel_filter.num_bins, m_options.mel_filter.num_bins);
-		Vector v;
 		ComputeDctMatrixTypeIII(&m);
-		v.Resize(m_options.num_cepstral_coeffs);
-		ComputeCepstralLifterCoeffs(m_options.cepstral_lifter, &v);
+		m_cepstral_coeffs.Resize(m_options.num_cepstral_coeffs, MatrixResizeType::kUndefined);
+		ComputeCepstralLifterCoeffs(m_options.cepstral_lifter, &m_cepstral_coeffs);
 		m_dct_matrix.Resize(m_options.num_cepstral_coeffs, m_options.mel_filter.num_bins);
 		m_dct_matrix.CopyFromMat(m.RowRange(0, m_options.num_cepstral_coeffs), MatrixTransposeType::kNoTrans);
-		// TODO: These two could probably be a move
-		m_cepstral_coeffs.Resize(m_options.num_cepstral_coeffs);
-		m_cepstral_coeffs.CopyFromVec(v);
 	}
 
 	int MfccStream::Read(Matrix* mat, std::vector<FrameInfo>* info) {
@@ -38,6 +36,7 @@ namespace snowboy {
 			info->clear();
 			return res;
 		}
+		SNOWBOY_ASSERT(!m.HasNan() && !m.HasInfinity());
 		if (field_x44 == -1) {
 			SubVector svec{m, 0};
 			field_x44 = svec.m_size;
@@ -84,12 +83,13 @@ namespace snowboy {
 	}
 
 	void MfccStream::ComputeMfcc(const VectorBase& param_1, SubVector* param_2) const {
-		Vector v;
+		// TODO: Instead of using thread_local I'd prefer stack allocation
+		static thread_local Vector v;
 		v.Resize(param_1.m_size);
 		v.CopyFromVec(param_1);
-		ComputePowerSpectrumReal(&v);
-		Vector vout;
-		m_melfilterbank->ComputeMelFilterBankEnergy(v, &vout);
+		ComputePowerSpectrumReal(v);
+		static thread_local Vector vout;
+		m_melfilterbank->ComputeMelFilterBankEnergy(v, vout);
 		vout.ApplyFloor(std::numeric_limits<float>::min());
 		vout.ApplyLog();
 		param_2->AddMatVec(1.0, m_dct_matrix, MatrixTransposeType::kNoTrans, vout, 0.0);

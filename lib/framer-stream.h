@@ -16,15 +16,8 @@ namespace snowboy {
 		std::string window_type;
 		void Register(const std::string&, OptionsItf*);
 	};
-	//static_assert(sizeof(FramerStreamOptions) == 0x20);
 	struct FramerStream : StreamItf {
-		int m_sample_rate;
-		int m_frame_length_ms;
-		int m_frame_shift_ms;
-		float m_dither_coeff;
-		float m_preemphasis_coeff;
-		bool m_subtract_mean;
-		std::string m_window_type; // unsure
+		FramerStreamOptions m_options;
 		int field_x38;
 		int field_x3c; // might be padding
 		Vector field_x40;
@@ -42,5 +35,4 @@ namespace snowboy {
 		virtual std::string Name() const override;
 		virtual ~FramerStream();
 	};
-	//static_assert(sizeof(FramerStream) == 0x68);
 } // namespace snowboy

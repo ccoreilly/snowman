@@ -22,13 +22,11 @@ namespace snowboy {
 		InitMelFilterBank();
 	}
 
-	MelFilterBank::~MelFilterBank() {}
-
 	void MelFilterBank::InitMelFilterBank() {
 		// TODO: This might contain bugs and generally needs a proper rewrite, but I dont know enough about audio processing to do it
 		field_x28.resize(m_options.num_bins, 0);
 		field_x40.resize(m_options.num_bins);
-		auto fVar13 = logf(m_options.low_frequency / 700.0f + 1.0f);
+		const auto fVar13 = logf(m_options.low_frequency / 700.0f + 1.0f);
 		auto fVar14 = logf(m_options.high_frequency / 700.0f + 1.0f);
 		fVar14 = (fVar14 * 1127.0 - fVar13 * 1127.0) / static_cast<float>(m_options.num_bins + 1);
 		auto fVar17 = static_cast<float>(m_options.sample_rate) / static_cast<float>(m_options.num_fft_points);
@@ -81,12 +79,8 @@ namespace snowboy {
 	float MelFilterBank::GetVtlnWarping(float param_1) const {
 		auto fVar1 = 1.0f / m_options.vtln_warping_factor;
 		float fVar3 = m_options.vtln_low_frequency / ((fVar1 < 1.0) ? fVar1 : 1.0);
-		auto fVar2 = fVar1;
-		if (fVar1 <= 1.0f) {
-			fVar2 = 1.0f;
-		}
 		if (fVar3 <= param_1) {
-			fVar2 = m_options.vtln_high_frequency / fVar2;
+			auto fVar2 = m_options.vtln_high_frequency / std::max(1.0f, fVar1);
 			if (fVar2 <= param_1) {
 				fVar3 = m_options.high_frequency;
 				return fVar3 - ((fVar3 - fVar1 * fVar2) / (fVar3 - fVar2)) * (fVar3 - param_1);
@@ -97,11 +91,10 @@ namespace snowboy {
 		}
 	}
 
-	void MelFilterBank::ComputeMelFilterBankEnergy(const VectorBase& param_1, Vector* param_2) const {
-		if (m_options.num_bins != param_2->m_size) param_2->Resize(m_options.num_bins);
-		for (int b = 0; b < param_2->m_size; b++) {
-			auto f = field_x40[b].DotVec(param_1.Range(field_x28[b], field_x40[b].m_size));
-			param_2->m_data[b] = f;
+	void MelFilterBank::ComputeMelFilterBankEnergy(const VectorBase& input, Vector& param_2) const {
+		if (m_options.num_bins != param_2.size()) param_2.Resize(m_options.num_bins);
+		for (int b = 0; b < param_2.size(); b++) {
+			param_2[b] = field_x40[b].DotVec(input.Range(field_x28[b], field_x40[b].size()));
 		}
 	}
 
@@ -131,15 +124,13 @@ namespace snowboy {
 		}
 	}
 
-	void ComputePowerSpectrumReal(Vector* data) {
-		if (data->m_size == 0) return;
-		auto ptr = data->m_data;
-		float f = ptr[0] * ptr[0];
-		for (int i = 0; i < data->m_size / 2 - 1; i++) {
-			ptr[i + 1] = ptr[i * 2 + 3] * ptr[i * 2 + 3] + ptr[i * 2 + 2] * ptr[i * 2 + 2];
+	void ComputePowerSpectrumReal(Vector& data) {
+		if (data.empty()) return;
+		data[0] = data[0] * data[0];
+		for (int i = 0; i < data.size() / 2 - 1; i++) {
+			data[i + 1] = data[i * 2 + 3] * data[i * 2 + 3] + data[i * 2 + 2] * data[i * 2 + 2];
 		}
-		ptr[0] = f;
-		data->Resize(data->m_size / 2, MatrixResizeType::kCopyData);
+		data.Resize(data.size() / 2, MatrixResizeType::kCopyData);
 	}
 
 	FftItf::~FftItf() {}
@@ -150,49 +141,53 @@ namespace snowboy {
 	}
 
 	void Fft::DoFft(bool inverse, Vector* data) const {
+		SNOWBOY_ASSERT(!data->HasNan());
 		if (m_options.field_x00) {
 			if (m_options.num_fft_points == 1) return;
 			if (inverse) {
 				DoProcessingForReal(true, data);
 				DoBitReversalSorting(m_bit_reversal_index, data);
 				DoDanielsonLanczos(true, data);
+				SNOWBOY_ASSERT(!data->HasNan() && !data->HasInfinity());
 				return;
 			}
 		}
 		DoBitReversalSorting(m_bit_reversal_index, data);
+		SNOWBOY_ASSERT(!data->HasNan() && !data->HasInfinity());
 		DoDanielsonLanczos(inverse, data);
+		SNOWBOY_ASSERT(!data->HasNan() && !data->HasInfinity());
 		if (m_options.field_x00 <= inverse) return;
 		DoProcessingForReal(inverse, data);
 	}
 
-	void Fft::DoDanielsonLanczos(bool inverse, Vector* data) const {
-		const auto uVar6 = data->m_size / 2;
-		const auto pfVar5 = data->m_data;
-		const auto iVar7 = snowboy::Fft::GetNumBits(uVar6);
+	void Fft::DoDanielsonLanczos(bool inverse, Vector* pdata) const {
+		auto& data = *pdata;
+		const auto iVar7 = snowboy::Fft::GetNumBits(data.size() / 2);
 		for (auto local_54 = 1; local_54 <= iVar7; local_54 += 1) {
 			const auto iVar9 = 1 << (local_54 & 0x1f);
-			for (auto local_68 = 0; local_68 < (int)uVar6; local_68 += iVar9) {
-				auto lVar14 = (long)local_68 * 2 + 1 + iVar9;
-				auto lVar15 = (long)(local_68 * 2);
+			for (auto local_68 = 0; local_68 < data.size() / 2; local_68 += iVar9) {
+				long lVar14 = local_68 * 2 + 1 + iVar9;
+				long lVar15 = (local_68 * 2);
 				for (auto iVar11 = 0; iVar11 != iVar9 / 2; iVar11++) {
-					float local_40, local_3c;
-					snowboy::Fft::GetTwiddleFactor(iVar9, iVar11, &local_40, &local_3c);
-					if (inverse) local_3c *= -1;
-					auto fVar16 = pfVar5[lVar15 + iVar9];
-					auto fVar18 = fVar16 * local_40 - local_3c * pfVar5[lVar14];
-					fVar16 = pfVar5[lVar14] * local_40 + fVar16 * local_3c;
-					pfVar5[lVar15 + iVar9] = pfVar5[lVar15] - fVar18;
-					pfVar5[lVar14] = pfVar5[lVar15 + 1] - fVar16;
-					pfVar5[lVar15] += fVar18;
-					pfVar5[lVar15 + 1] += fVar16;
+					auto twiddle = snowboy::Fft::GetTwiddleFactor(iVar9, iVar11);
+					if (inverse) twiddle.second *= -1;
+					auto fVar16 = data[lVar15 + iVar9];
+					auto fVar18 = fVar16 * twiddle.first - twiddle.second * data[lVar14];
+					fVar16 = data[lVar14] * twiddle.first + fVar16 * twiddle.second;
+					data[lVar15 + iVar9] = data[lVar15] - fVar18;
+					auto x = data[lVar15 + 1];
+					x = x - fVar16;
+					data[lVar14] = data[lVar15 + 1] - fVar16;
+					data[lVar15] += fVar18;
+					data[lVar15 + 1] += fVar16;
 					lVar14 += 2;
 					lVar15 += 2;
 				}
 			}
 		}
 		if (inverse) {
-			for (int i = 0; i < data->m_size; i++)
-				data->m_data[i] = data->m_data[i] / static_cast<float>(uVar6);
+			for (int i = 0; i < data.size(); i++)
+				data[i] = data[i] / static_cast<float>(data.size() / 2);
 		}
 	}
 
@@ -257,17 +252,16 @@ namespace snowboy {
 			auto lVar12 = 2;
 			auto lVar9 = num_pts;
 			for (auto iVar13 = 1; iVar13 <= iVar11 / 4; iVar13 += 1) {
-				float twiddle_a, twiddle_b;
-				snowboy::Fft::GetTwiddleFactor(num_pts, param_1 ? (static_cast<double>(num_pts) * 0.5 - iVar13) : iVar13, &twiddle_a, &twiddle_b);
+				const auto twiddle = snowboy::Fft::GetTwiddleFactor(num_pts, param_1 ? (static_cast<double>(num_pts) * 0.5 - iVar13) : iVar13);
 				const auto fVar4 = ptr[lVar9 - 1];
 				const auto fVar5 = ptr[lVar9 - 2];
 				const auto fVar6 = ptr[lVar12];
 				const auto fVar7 = ptr[lVar12 + 1];
-				ptr[lVar12] = (twiddle_a * fVar7 + (twiddle_b + 1.0) * fVar6 + (1.0 - twiddle_b) * fVar5 + fVar4 * twiddle_a) * 0.5;
-				ptr[lVar12 + 1] = ((twiddle_b + 1.0) * fVar7 + ((fVar5 * twiddle_a - (1.0 - twiddle_b) * fVar4) - twiddle_a * fVar6)) * 0.5;
+				ptr[lVar12] = (twiddle.first * fVar7 + (twiddle.second + 1.0) * fVar6 + (1.0 - twiddle.second) * fVar5 + fVar4 * twiddle.first) * 0.5;
+				ptr[lVar12 + 1] = ((twiddle.second + 1.0) * fVar7 + ((fVar5 * twiddle.first - (1.0 - twiddle.second) * fVar4) - twiddle.first * fVar6)) * 0.5;
 				if (iVar13 * 2 != lVar9 - 2) {
-					ptr[lVar9 - 2] = ((((twiddle_b + 1.0) * fVar5 - fVar4 * twiddle_a) + (1.0 - twiddle_b) * fVar6) - twiddle_a * fVar7) * 0.5;
-					ptr[lVar9 - 1] = (((fVar5 * twiddle_a + fVar4 * (twiddle_b + 1.0)) - fVar6 * twiddle_a) - fVar7 * (1.0 - twiddle_b)) * 0.5;
+					ptr[lVar9 - 2] = ((((twiddle.second + 1.0) * fVar5 - fVar4 * twiddle.first) + (1.0 - twiddle.second) * fVar6) - twiddle.first * fVar7) * 0.5;
+					ptr[lVar9 - 1] = (((fVar5 * twiddle.first + fVar4 * (twiddle.second + 1.0)) - fVar6 * twiddle.first) - fVar7 * (1.0 - twiddle.second)) * 0.5;
 				}
 				lVar12 += 2;
 				lVar9 -= 2;
@@ -280,26 +274,16 @@ namespace snowboy {
 	}
 
 	unsigned int Fft::GetNumBits(unsigned int param_1) const {
-		// Note: This is the original function, but using __builtin_clz should generate way faster code
-		//unsigned int res = 0;
-		//while(param_1 > 1) {
-		//    res += 1;
-		//    param_1 >>= 1;
-		//}
-		//return res;
-		// TODO: Use C++20 bit operations once we build for real
 		return param_1 == 0 ? 0 : (31 - __builtin_clz(param_1));
 	}
 
-	void Fft::GetTwiddleFactor(int param_1, int param_2, float* param_3, float* param_4) const {
+	std::pair<float, float> Fft::GetTwiddleFactor(int param_1, int param_2) const {
 		auto size = m_twiddle_factors.size();
 		auto idx = (size / param_1) * param_2 * 2;
 		if (idx < size) {
-			*param_3 = m_twiddle_factors[idx];
-			*param_4 = m_twiddle_factors[idx + 1];
+			return {m_twiddle_factors[idx], m_twiddle_factors[idx + 1]};
 		} else {
-			*param_3 = m_twiddle_factors[size - idx] * -1;
-			*param_3 = m_twiddle_factors[(size - idx) + 1] * -1;
+			return {m_twiddle_factors[size - idx] * -1.0f, m_twiddle_factors[(size - idx) + 1] * -1.0f};
 		}
 	}
 

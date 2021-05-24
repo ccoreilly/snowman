@@ -2,8 +2,8 @@ extern "C"
 {
 #include <cblas.h>
 }
+#include <cmath>
 #include <cstring>
-#include <iostream>
 #include <matrix-wrapper.h>
 #include <snowboy-debug.h>
 #include <snowboy-io.h>
@@ -103,7 +103,7 @@ namespace snowboy {
 	void MatrixBase::CopyRows(const MatrixBase& param_1, const std::vector<int>& param_2) {
 		for (auto row = 0; row < m_rows; row++) {
 			while (param_2[row] != -1) {
-				memcpy(&m_data[m_stride * row], param_1.m_data + (param_2[row] * param_1.m_stride), m_cols << 2);
+				memcpy(&m_data[m_stride * row], param_1.m_data + (param_2[row] * param_1.m_stride), m_cols * sizeof(float));
 				row++;
 				if (row >= this->m_rows) return;
 			}
@@ -234,8 +234,8 @@ namespace snowboy {
 	void MatrixBase::Write(bool binary, std::ostream* os) const {
 		if (!binary) SNOWBOY_ERROR() << "Not implemented";
 		WriteToken(binary, "FM", os);
-		WriteBasicType<int>(binary, m_rows, os);
-		WriteBasicType<int>(binary, m_cols, os);
+		WriteBasicType<int32_t>(binary, m_rows, os);
+		WriteBasicType<int32_t>(binary, m_cols, os);
 		if (m_cols == m_stride) {
 			os->write(reinterpret_cast<const char*>(m_data), m_rows * m_cols * sizeof(float));
 		} else {
@@ -248,25 +248,64 @@ namespace snowboy {
 		}
 	}
 
+	bool MatrixBase::HasNan() const {
+		for (size_t r = 0; r < rows(); r++) {
+			for (size_t c = 0; c < cols(); c++) {
+				if ((*this)(r, c) != (*this)(r, c)) return true;
+			}
+		}
+		return false;
+	}
+
+	bool MatrixBase::HasInfinity() const {
+		for (size_t r = 0; r < rows(); r++) {
+			for (size_t c = 0; c < cols(); c++) {
+				if (std::isinf((*this)(r, c))) return true;
+			}
+		}
+		return false;
+	}
+
 	static size_t allocs = 0;
 	static size_t frees = 0;
 
+	template <typename T>
+	constexpr inline T next_multiple_of(T val, T multi) noexcept {
+		return (val + multi - 1) & ~(multi - 1);
+	}
+
 	void Matrix::Resize(int rows, int cols, MatrixResizeType resize) {
-		// TODO: Smarter alloc similar to vector
-		if (m_rows == rows && m_cols == cols) {
-			if (resize == MatrixResizeType::kSetZero) Set(0.0f);
+		if (cols == 0 && rows == 0) {
+			m_rows = 0;
+			m_cols = 0;
 			return;
+		}
+		// TODO: Smarter alloc similar to vector
+		uint64_t mem_size = static_cast<uint64_t>(m_rows) * static_cast<uint64_t>(m_stride);
+		uint64_t new_size = static_cast<uint64_t>(rows) * next_multiple_of<uint64_t>(cols, 4);
+		if (new_size <= mem_size) {
+			if (resize == MatrixResizeType::kUndefined || resize == MatrixResizeType::kSetZero) {
+				m_rows = rows;
+				m_cols = cols;
+				m_stride = next_multiple_of<uint64_t>(cols, 4);
+				if (resize == MatrixResizeType::kSetZero) Set(0.0f);
+				return;
+			} else if (cols <= m_stride) {
+				m_rows = rows;
+				m_cols = cols;
+				return;
+			}
 		}
 		if (m_data == nullptr) {
 			AllocateMatrixMemory(rows, cols);
-			Set(0.0f);
+			if (resize == MatrixResizeType::kSetZero) Set(0.0f);
 			return;
 		}
 		if (resize == MatrixResizeType::kCopyData) {
 			Matrix temp;
 			temp.Resize(rows, cols, MatrixResizeType::kSetZero);
 			for (int r = 0; r < std::min(rows, (int)m_rows); r++) {
-				memcpy(&temp.m_data[r * m_stride], &m_data[r * m_stride], std::min((int)m_cols, cols));
+				memcpy(&temp.m_data[r * temp.m_stride], &m_data[r * m_stride], std::min((int)m_cols, cols) * sizeof(float));
 			}
 			temp.Swap(this);
 		} else {
@@ -353,8 +392,8 @@ namespace snowboy {
 		} else {
 			ExpectToken(binary, "FM", is);
 			int rows, cols;
-			ReadBasicType<int>(binary, &rows, is);
-			ReadBasicType<int>(binary, &cols, is);
+			ReadBasicType<int32_t>(binary, &rows, is);
+			ReadBasicType<int32_t>(binary, &cols, is);
 			if (m_rows != rows || m_cols != cols) {
 				Resize(rows, cols, MatrixResizeType::kUndefined);
 			}
@@ -399,6 +438,22 @@ namespace snowboy {
 		m_rows = rows;
 		m_cols = cols;
 		m_data = parent.m_data + (rowoffset * parent.m_stride) + coloffset;
+	}
+
+	std::ostream& operator<<(std::ostream& s, const MatrixBase& o) {
+		auto flags = s.flags();
+		s << std::fixed;
+		s.precision(3);
+		s << "mat<" << o.m_rows << "," << o.m_cols << ">{\n";
+		for (int r = 0; r < o.m_rows; r++) {
+			s << "{ ";
+			for (int c = 0; c < o.m_cols; c++)
+				s << o.m_data[r * o.m_stride + c] << " ";
+			s << " }\n";
+		}
+		s << "}";
+		s.flags(flags);
+		return s;
 	}
 
 } // namespace snowboy

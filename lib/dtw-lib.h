@@ -16,13 +16,13 @@ namespace snowboy {
 		// TODO: This could be replaced with enum DistanceType
 		std::string distance_metric;
 	};
-	//static_assert(sizeof(SlidingDtwOptions) == 0x10);
 	struct SlidingDtw {
 		SlidingDtwOptions m_options;
 		std::deque<std::deque<float>> field_x18;
 		const MatrixBase* m_reference = nullptr;
 		int field_x70 = 0;
 		float m_early_stop_threshold = 1.0;
+		DistanceType m_distance_function;
 
 		SlidingDtw();
 		SlidingDtw(const SlidingDtwOptions&);
@@ -38,7 +38,6 @@ namespace snowboy {
 		void ComputeBandBoundary(int, int*, int*) const;
 		virtual ~SlidingDtw();
 	};
-	//static_assert(sizeof(SlidingDtw) == 0x78);
 
-	void DtwAlign(DistanceType, const MatrixBase&, const MatrixBase&, std::vector<std::vector<int>>*);
+	float DtwAlign(DistanceType, const MatrixBase&, const MatrixBase&, std::vector<std::vector<int>>*);
 } // namespace snowboy

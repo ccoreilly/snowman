@@ -40,10 +40,9 @@ namespace snowboy {
 		// Padding
 		void Register(const std::string&, OptionsItf*);
 	};
-	//static_assert(sizeof(PipelineDetectOptions) == 8);
 
-	struct PipelineDetect : PipelineItf {
-		// Virtual stuff
+	class PipelineDetect : public PipelineItf {
+	public:
 		virtual void RegisterOptions(const std::string&, OptionsItf*) override;
 		virtual int GetPipelineSampleRate() const override;
 		virtual bool Init() override;
@@ -55,8 +54,6 @@ namespace snowboy {
 		PipelineDetect(const PipelineDetectOptions& options);
 
 		void ApplyFrontend(bool apply);
-		void ClassifyModels(const std::string&, std::string*, std::string*);
-		void ClassifySensitivities(const std::string&, std::string*, std::string*) const;
 		uint64_t GetDetectedFrameId() const;
 		std::string GetSensitivity() const;
 		int NumHotwords() const;
@@ -67,6 +64,11 @@ namespace snowboy {
 		void SetModel(const std::string& model);
 		void SetSensitivity(const std::string& sensitivity);
 		void UpdateModel() const;
+
+	private:
+		void ClassifyModels(const std::string&, std::string*, std::string*);
+		bool ClassifyModel(const std::string& model_filename);
+		void ClassifySensitivities(const std::string&, std::string*, std::string*) const;
 
 		std::unique_ptr<InterceptStream> m_interceptStream;
 		std::unique_ptr<GainControlStream> m_gainControlStream;
@@ -102,19 +104,11 @@ namespace snowboy {
 		std::unique_ptr<UniversalDetectStreamOptions> m_universalDetectStreamOptions;
 
 		std::vector<FrameInfo> m_eavesdropStreamFrameInfoVector;
-		std::vector<bool> field_x110;
-		std::vector<int> field_x138;
-		std::vector<int> field_x150;
+		std::vector<bool> m_is_personal_model;
+		std::vector<int> m_personal_kw_mapping;
+		std::vector<int> m_universal_kw_mapping;
 
 		bool field_x168 = false;
-		bool field_x169 = false;
-		char data2[6];
+		bool m_frontend_enabled = false;
 	};
-	//static_assert(sizeof(PipelineDetect) == 368);
-	//static_assert(sizeof(PipelineDetect::m_eavesdropStreamFrameInfoVector) == 24);
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Winvalid-offsetof"
-	//static_assert(offsetof(PipelineDetect, m_universalDetectStreamOptions) == 0xf0);
-	//static_assert(offsetof(PipelineDetect, m_eavesdropStreamFrameInfoVector) == 0xf8);
-#pragma GCC diagnostic pop
 } // namespace snowboy
