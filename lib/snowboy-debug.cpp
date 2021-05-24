@@ -8,7 +8,7 @@
 namespace snowboy {
 	int global_snowboy_verbose_level = 0;
 
-	#ifdef __GLIBC__
+#ifdef __GLIBC__
 	std::string GetStackTrace() {
 		std::string res{"\n[stack trace: ]\n"};
 		void* buffer[50];
@@ -24,7 +24,7 @@ namespace snowboy {
 
 		return res;
 	}
-	#endif
+#endif
 
 	void SnowboyAssertFailure(int line, const std::string& file, const std::string& func, const std::string& cond) {
 		snowboy::SnowboyLogMsg msg{line, file, func, snowboy::SnowboyLogType::ASSERT_FAIL, 0};
@@ -58,9 +58,9 @@ namespace snowboy {
 		std::cerr << m_stream.str() << std::endl;
 		if (m_type == SnowboyLogType::ERROR)
 		{
-			#ifdef __GLIBC__
+#ifdef __GLIBC__
 			m_stream << GetStackTrace();
-			#endif
+#endif
 			// TODO: This isnt normally allowed....
 			throw std::runtime_error(m_stream.str());
 		} else if (m_type == SnowboyLogType::ASSERT_FAIL)

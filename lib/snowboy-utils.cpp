@@ -22,7 +22,7 @@ namespace snowboy {
 		return res;
 	}
 
-	#ifdef __GLIBC__
+#ifdef __GLIBC__
 	bool CheckStdinNonBlocking() {
 		fd_set set{};
 		struct timeval timeout {};
@@ -33,7 +33,7 @@ namespace snowboy {
 		select(1, &set, nullptr, nullptr, &timeout);
 		return FD_ISSET(0, &set);
 	}
-	#endif
+#endif
 
 	bool ConvertStringToBoolean(const std::string& val) {
 		return ConvertStringTo<bool>(val);

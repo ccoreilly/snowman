@@ -52,7 +52,7 @@ namespace snowboy {
 	}
 
 	SubMatrix MatrixBase::ColRange(int param_1, int param_2) const {
-		return SubMatrix{*this, 0, (int) m_rows, param_1, param_2};
+		return SubMatrix{*this, 0, (int)m_rows, param_1, param_2};
 	}
 
 	void MatrixBase::CopyColFromVec(const VectorBase& param_1, int param_2) {
@@ -193,7 +193,7 @@ namespace snowboy {
 	}
 
 	SubMatrix MatrixBase::RowRange(int param_1, int param_2) const {
-		return SubMatrix{*this, param_1, param_2, 0, (int) m_cols};
+		return SubMatrix{*this, param_1, param_2, 0, (int)m_cols};
 	}
 
 	void MatrixBase::Scale(float param_1) {
